@@ -1,0 +1,48 @@
+version: '2'
+services:
+  mysql:
+    image: derimagia/mariadb
+    #build: ./dockerfiles/mariadb
+    environment:
+        MYSQL_ROOT_PASSWORD: root
+        MYSQL_DATABASE: project
+        MYSQL_USER: project
+        MYSQL_PASSWORD: project
+    ports: ["3306:3306"]
+    volumes_from: ["data"]
+  redis:
+    image: redis:latest
+    ports: ["6379:6379"]
+  mail:
+    image: mailhog/mailhog
+    ports: ["8025:8025"]
+  php:
+    image: derimagia/php
+    #build: ./dockerfiles/php
+    expose: ["9000"]
+    volumes_from: ["app"]
+    links:
+        - mysql
+        - redis
+        - mail
+  nginx:
+    image: derimagia/nginx
+    #build: ./dockerfiles/nginx
+    links:
+      - php
+    volumes_from: ["app"]
+    ports: ["80:80"]
+  app:
+    image: derimagia/php
+    volumes:
+        - ./app:/var/www/html
+    entrypoint: ["/bin/sh", "-c"]
+    command: "echo 'Running mariadb app-data-volime.'"
+  data:
+    image: derimagia/mariadb
+    volumes:
+        - /var/lib/mysql
+    entrypoint: ["/bin/sh", "-c"]
+    command: "echo 'Running mariadb data-volime.'"
+volumes:
+  db-data:
