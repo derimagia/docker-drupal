@@ -1,7 +1,7 @@
 .PHONY: build up down restart clean-containers clean-images clean-volumes clean open
 
 build:
-	docker-compose build --force-rm --no-cache
+	docker-compose build --no-cache
 
 up:
 	docker-compose up

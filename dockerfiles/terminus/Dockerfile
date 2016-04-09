@@ -6,7 +6,7 @@ ENV TERMINUS_VERSION 0.11.1
 
 USER root
 RUN apk add --no-cache --repository "http://dl-cdn.alpinelinux.org/alpine/edge/testing" \
-           php7-ctype curl pv
+           php7-ctype curl pv mariadb-client
 
 RUN ln -sf /usr/bin/php7 /usr/bin/php  && \
     curl -Lo /usr/bin/drush "https://github.com/drush-ops/drush/releases/download/$DRUSH_VERSION/drush.phar" && \

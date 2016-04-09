@@ -1,30 +1,27 @@
 #!/usr/bin/env bash
-PROJECT_NAME=dockerdrupal
-NETWORK_NAME=${PROJECT_NAME}_default
-MYSQL_HOSTNAME=${PROJECT_NAME}_mysql_1
-MYSQL_DATABASE=project
-MYSQL_USER=project
-MYSQL_PASSWORD=project
-SITE=darksupply-7
-ENV=dev
+# Default Values for terminus
+TERMINUS_SITE=${TERMINUS_SITE:-darksupply-7}
+TERMINUS_ENV=${TERMINUS_ENV:-dev}
 
-mysqldump=$(terminus site connection-info --site=$SITE --env=$ENV --field=mysql_command | \
+# Test Values for Now
+MYSQL_CONTAINER=mysql
+MYSQL_DATABASE=project
+MYSQL_USER=root
+MYSQL_PASSWORD=project
+
+# MySQL Dump Command
+mysqldump=$(terminus site connection-info --site=$TERMINUS_SITE --env=$TERMINUS_ENV --field=mysql_command | \
    sed 's/^mysql/mysqldump --hex-blob --routines --triggers /')
 
-dbps=$(docker-compose ps -q mysql)
+# MySQL Container ID
+dbps=$(docker-compose ps -q $MYSQL_CONTAINER | cut -f1)
 
-terminus site wake --site=$SITE --env=$ENV
+terminus site wake --site=$TERMINUS_SITE --env=$TERMINUS_ENV
+command time docker run -i --rm --net=container:$dbps derimagia/terminus "$mysqldump | mysql -u$MYSQL_USER -h$MYSQL_CONTAINER $MYSQL_DATABASE"
 
-docker exec -i "$dbps" sh -c "$mysqldump | mysql -uroot project"
-
-# Try to do it through terminus CLI: (Need to connect terminus + mysql, maybe install mysql on cli container)
-
-# mysqldump="$(terminus site connection-info --site=$SITE --env=dev --field=mysql_command | \
-#    sed 's/^mysql/mysqldump --hex-blob --routines --triggers /') | \
-#    mysql -uproject -pproject -hmysql project"
-#
-# mysqlps=$(docker-compose ps -q mysql)
-#
-# # Wake Site
-# terminus site wake --site=$SITE --env=dev
-# docker run --rm -i derimagia/terminus "$mysqldump"
+dburl=$(terminus site connection-info --site=$TERMINUS_SITE --env=$TERMINUS_ENV --field=mysql_url)
+#command time docker run -i --rm --net=container:$dbps derimagia/terminus "$mysqldump > /dev/null"
+command time terminus drush "sql-dump --gzip --db-url=$dburl" >  /dev/null
+command time terminus drush "sql-dump --gzip --structure-tables-list=cache,cache_* --db-url=$dburl" >  /dev/null
+command time terminus drush "sql-dump --db-url=$dburl" >  /dev/null
+command time terminus drush "sql-dump --structure-tables-list=cache,cache_*  --db-url=$dburl" > /dev/null
