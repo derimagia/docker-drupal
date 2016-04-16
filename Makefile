@@ -21,12 +21,12 @@ restart:
 clean: clean-containers clean-images clean-volumes
 
 clean-containers:
-	docker ps -aqf status=exited | xargs -r docker rm -v
+	docker ps -aqf status=exited | xargs docker rm -v
 
 clean-images:
-	docker images -aqf dangling=true | xargs -r docker rmi
+	docker images -aqf dangling=true | xargs docker rmi
 
 clean-volumes:
-    docker volume ls -qf dangling=true | xargs -r docker volume rm
+    docker volume ls -qf dangling=true | xargs docker volume rm
 
 default: build

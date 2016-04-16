@@ -3,46 +3,33 @@ services:
   mysql:
     image: derimagia/mariadb
     #build: ./dockerfiles/mariadb
-    environment:
-        MYSQL_ROOT_PASSWORD: root
-        MYSQL_DATABASE: project
-        MYSQL_USER: project
-        MYSQL_PASSWORD: project
     ports: ["3306:3306"]
-    volumes_from: ["data"]
+    volumes: ["db-data:/var/lib/mysql"]
   redis:
-    image: redis:latest
+    image: redis:3-alpine
     ports: ["6379:6379"]
-  mail:
+  mailhog:
     image: mailhog/mailhog
     ports: ["8025:8025"]
   php:
     image: derimagia/php
     #build: ./dockerfiles/php
     expose: ["9000"]
-    volumes_from: ["app"]
+    env_file: .env
+    volumes:
+        - ~/Projects/TRN/BetterPT/betterpt.dev:/var/www/html
     links:
-        - mysql
-        - redis
-        - mail
-  nginx:
+        - mysql:$MYSQL_HOST
+        - redis:$REDIS_HOST
+        - mailhog:$MAIL_HOST
+  ngnix:
     image: derimagia/nginx
     #build: ./dockerfiles/nginx
+    volumes_from: ["php"]
+    volumes:
+        - ~/Projects/TRN/BetterPT/betterpt.dev:/var/www/html
     links:
-      - php
-    volumes_from: ["app"]
+        - php
     ports: ["80:80"]
-  app:
-    image: derimagia/php
-    volumes:
-        - ./app:/var/www/html
-    entrypoint: ["/bin/sh", "-c"]
-    command: "echo 'Running mariadb app-data-volime.'"
-  data:
-    image: derimagia/mariadb
-    volumes:
-        - /var/lib/mysql
-    entrypoint: ["/bin/sh", "-c"]
-    command: "echo 'Running mariadb data-volime.'"
 volumes:
   db-data:
