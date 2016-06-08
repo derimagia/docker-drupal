@@ -1,48 +1,87 @@
 version: '2'
 services:
   mysql:
-    image: derimagia/mariadb
-    #build: ./dockerfiles/mariadb
+    image: mariadb:latest
     environment:
         MYSQL_ROOT_PASSWORD: root
         MYSQL_DATABASE: project
         MYSQL_USER: project
         MYSQL_PASSWORD: project
-    ports: ["3306:3306"]
-    volumes_from: ["data"]
+    ports:
+      - 3306:3306
+    volumes_from:
+      - data
   redis:
     image: redis:latest
-    ports: ["6379:6379"]
+    ports:
+      - 6379:6379
   mail:
     image: mailhog/mailhog
-    ports: ["8025:8025"]
+    ports:
+      - 8025:8025
   php:
     image: derimagia/php
-    #build: ./dockerfiles/php
-    expose: ["9000"]
-    volumes_from: ["app"]
+    #build: ../docker-php
+    volumes_from:
+      - data
+    environment:
+        DB_HOST: mysql
+        DB_NAME: project
+        DB_USER: project
+        DB_PASSWORD: project
+        DB_PORT: 3306
+        PRESSFLOW_SETTINGS: |
+            {
+                "databases": {
+                  "default": {
+                    "default": {
+                      "driver": "mysql",
+                      "prefix": "",
+                      "database": "project",
+                      "username": "project",
+                      "password": "project",
+                      "host": "mysql",
+                      "port": 3306
+                    }
+                  }
+                },
+                "conf" : {
+                    "pressflow_smart_start" : true,
+                    "pantheon_binding" : "docker",
+                    "pantheon_site_uuid" : "docker",
+                    "pantheon_environment" : "docker",
+                    "pantheon_tier" : "docker",
+                    "redis_client_host" : "redis",
+                    "redis_client_port" : 8161,
+                    "redis_client_password" : "",
+                    "file_public_path" : "sites/default/files",
+                    "file_private_path" : "sites/default/files/private",
+                    "file_directory_path" : "site/default/files",
+                    "file_temporary_path" : "/tmp",
+                    "file_directory_temp" : "/tmp",
+                    "css_gzip_compression" : false,
+                    "js_gzip_compression" : false,
+                    "page_compression" : false
+                }
+            }
     links:
         - mysql
         - redis
         - mail
   nginx:
     image: derimagia/nginx
-    #build: ./dockerfiles/nginx
+    #build: ../docker-nginx
     links:
       - php
-    volumes_from: ["app"]
-    ports: ["80:80"]
-  app:
-    image: derimagia/php
-    volumes:
-        - ./app:/var/www/html
-    entrypoint: ["/bin/sh", "-c"]
-    command: "echo 'Running mariadb app-data-volime.'"
+    volumes_from:
+      - data
+    ports:
+      - 80:80
   data:
-    image: derimagia/mariadb
+    image: derimagia/docker-lsync
+    build: ../docker-lsync
     volumes:
-        - /var/lib/mysql
-    entrypoint: ["/bin/sh", "-c"]
-    command: "echo 'Running mariadb data-volime.'"
+      - ./app:/src
+      - /var/lib/mysql
 volumes:
-  db-data:
+  data:

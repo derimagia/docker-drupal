@@ -1,6 +1,9 @@
-.PHONY: build up down restart clean-containers clean-images clean-volumes clean open
+.PHONY: build force-build up down restart clean-containers clean-images clean-volumes clean open
 
 build:
+	docker-compose build
+
+force-build:
 	docker-compose build --no-cache
 
 up:
@@ -13,7 +16,7 @@ open:
 	open 'http://'`docker-machine ip`
 
 in:
-	docker exec -it `docker ps | grep _ngnix  | awk '{print $$1}'` /bin/sh
+	command docker exec -it `docker ps | grep _ngnix | awk '{print $$1}'` /bin/sh
 
 restart:
 	docker-compose restart
@@ -21,12 +24,12 @@ restart:
 clean: clean-containers clean-images clean-volumes
 
 clean-containers:
-	docker ps -aqf status=exited | xargs -r docker rm -v
+	command docker ps -aqf status=exited | xargs -r docker rm -v
 
 clean-images:
-	docker images -aqf dangling=true | xargs -r docker rmi
+	command docker images -aqf dangling=true | xargs -r docker rmi
 
 clean-volumes:
-    docker volume ls -qf dangling=true | xargs -r docker volume rm
+	command docker volume ls -qf dangling=true | xargs -r docker volume rm
 
 default: build
