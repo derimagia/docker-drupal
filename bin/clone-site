@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+DRUSH_ALIAS="$1"
+
+if [[ -z $DRUSH_ALIAS ]]; then
+  echo "Must provide drush alias"
+  exit 1
+fi
+
+
+drush $DRUSH_ALIAS
