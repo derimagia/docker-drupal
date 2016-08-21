@@ -12,4 +12,5 @@
 ### Redis
 * Redis - 6379 (Exposed, Default)
 ### PHP
-* php-fpm - 9000 (Default)
+* php-fpm - 9500 (Default)
+* xdebug - 9000 (Default)

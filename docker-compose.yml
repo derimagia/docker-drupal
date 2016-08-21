@@ -3,7 +3,7 @@ services:
   mysql:
     image: mariadb:latest
     volumes:
-      - "./.data/db:/var/lib/mysql"
+      - data:/var/lib/mysql
     environment:
         MYSQL_ROOT_PASSWORD: project
         MYSQL_DATABASE: project
@@ -12,10 +12,12 @@ services:
     ports:
       - 3306:3306
   php:
+    build: ../docker-php
     image: derimagia/php
     volumes:
       - "./app:/var/www/html"
     environment:
+        PHP_SENDMAIL_PATH: /usr/sbin/sendmail -itS mail:1025
         DB_HOST: mysql
         DB_NAME: project
         DB_USER: project
@@ -25,6 +27,8 @@ services:
         - mysql
         - redis
         - mail
+    ports:
+      - 9000:9000
   nginx:
     image: derimagia/nginx
     links:
@@ -41,3 +45,5 @@ services:
     image: mailhog/mailhog
     ports:
       - 8025:8025
+volumes:
+  data:
