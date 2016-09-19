@@ -21,7 +21,7 @@ in:
 restart:
 	docker-compose restart
 
-clean: clean-containers clean-images clean-volumes
+clean: clean-containers clean-images
 
 clean-containers:
 	command docker ps -aqf status=exited | xargs -r docker rm

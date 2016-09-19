@@ -1,49 +1,42 @@
-version: '2'
-services:
-  mysql:
-    image: mariadb:latest
-    volumes:
-      - data:/var/lib/mysql
-    environment:
-        MYSQL_ROOT_PASSWORD: project
-        MYSQL_DATABASE: project
-        MYSQL_USER: project
-        MYSQL_PASSWORD: project
-    ports:
-      - 3306:3306
-  php:
-    build: ../docker-php
-    image: derimagia/php
-    volumes:
-      - "./app:/var/www/html"
-    environment:
-        PHP_SENDMAIL_PATH: /usr/sbin/sendmail -itS mail:1025
-        DB_HOST: mysql
-        DB_NAME: project
-        DB_USER: project
-        DB_PASSWORD: project
-        DB_PORT: 3306
-    links:
-        - mysql
-        - redis
-        - mail
-    ports:
-      - 9000:9000
-  nginx:
-    image: derimagia/nginx
-    links:
-      - php
-    volumes_from:
-      - php
-    ports:
-      - 80:80
-  redis:
-    image: redis:latest
-    ports:
-      - 6379:6379
-  mail:
-    image: mailhog/mailhog
-    ports:
-      - 8025:8025
-volumes:
-  data:
+mail:
+  image: mailhog/mailhog
+  environment:
+    VIRTUAL_HOST: mail.drupal.dev
+    VIRTUAL_PORT: 8025
+    SITE_TYPE: proxy
+
+redis:
+  image: redis:latest
+
+edge:
+  image: derimagia/edge
+  ports:
+    - 80:80
+  volumes_from:
+    - php
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+
+php:
+  image: derimagia/php
+  environment:
+    VIRTUAL_HOST: drupal.dev
+    DB_HOST: mysql
+    DB_NAME: project
+    DB_PASSWORD: project
+    DB_PORT: '3306'
+    DB_USER: project
+    SITE_TYPE: drupal
+    PHP_SENDMAIL_PATH: /usr/sbin/sendmail -itS mail:1025
+  volumes:
+    - ./app:/var/www/html
+
+mysql:
+  image: mariadb:latest
+  environment:
+    MYSQL_DATABASE: project
+    MYSQL_PASSWORD: project
+    MYSQL_ROOT_PASSWORD: project
+    MYSQL_USER: project
+  volumes:
+    - data:/var/lib/mysql
