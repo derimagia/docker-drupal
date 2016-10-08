@@ -12,12 +12,6 @@ up:
 down:
 	docker-compose stop
 
-open:
-	open 'http://'`docker-machine ip`
-
-in:
-	command docker exec -it `docker ps | grep _ngnix | awk '{print $$1}'` /bin/sh
-
 restart:
 	docker-compose restart
 

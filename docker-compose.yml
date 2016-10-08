@@ -1,42 +1,62 @@
-mail:
-  image: mailhog/mailhog
-  environment:
-    VIRTUAL_HOST: mail.drupal.dev
-    VIRTUAL_PORT: 8025
-    SITE_TYPE: proxy
+version: "2"
+services:
+  mail:
+    image: mailhog/mailhog
+    environment:
+      VIRTUAL_HOST: mail.drupal.dev
+      VIRTUAL_PORT: 8025
+      SITE_TYPE: proxy
 
-redis:
-  image: redis:latest
+  redis:
+    image: redis:latest
 
-edge:
-  image: derimagia/edge
-  ports:
-    - 80:80
-  volumes_from:
-    - php
-  volumes:
-    - /var/run/docker.sock:/var/run/docker.sock:ro
+  edge:
+    image: derimagia/edge
+    ports:
+      - 80:80
+    volumes_from:
+      - php
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
 
-php:
-  image: derimagia/php
-  environment:
-    VIRTUAL_HOST: drupal.dev
-    DB_HOST: mysql
-    DB_NAME: project
-    DB_PASSWORD: project
-    DB_PORT: '3306'
-    DB_USER: project
-    SITE_TYPE: drupal
-    PHP_SENDMAIL_PATH: /usr/sbin/sendmail -itS mail:1025
-  volumes:
-    - ./app:/var/www/html
+  php:
+    image: derimagia/php
+    environment:
+      VIRTUAL_HOST: drupal.dev
+      WEB_ROOT: /var/www/html/web
+      SITE_TYPE: drupal
+      DB_HOST: mysql
+      DB_NAME: project
+      DB_PASSWORD: project
+      DB_PORT: '3306'
+      DB_USER: project
+      PHP_SENDMAIL_PATH: /usr/sbin/sendmail -itS mail:1025
+    volumes:
+      - /var/www/html
 
-mysql:
-  image: mariadb:latest
-  environment:
-    MYSQL_DATABASE: project
-    MYSQL_PASSWORD: project
-    MYSQL_ROOT_PASSWORD: project
-    MYSQL_USER: project
-  volumes:
-    - data:/var/lib/mysql
+  mysql:
+    image: mariadb:latest
+    environment:
+      MYSQL_DATABASE: project
+      MYSQL_PASSWORD: project
+      MYSQL_ROOT_PASSWORD: project
+      MYSQL_USER: project
+    ports:
+      - 3306:3306
+    volumes:
+      - data:/var/lib/mysql
+
+  bg-sync:
+    image: cweagans/bg-sync
+    volumes:
+      - .:/source
+    volumes_from:
+      - php
+    environment:
+      - SYNC_DESTINATION=/var/www/html
+      - SYNC_MAX_INOTIFY_WATCHES=40000
+      - SYNC_VERBOSE=1
+    privileged: true
+
+volumes:
+  data: { }
